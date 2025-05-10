@@ -1713,7 +1713,7 @@
       // Close mobile menu if open
       const mobileMenu = document.getElementById('mobileMenu');
       const menuToggle = document.getElementById('menuToggle');
-      if (mobileMenu.classList.contains('open')) {
+      if (mobileMenu && mobileMenu.classList.contains('open')) {
         mobileMenu.classList.remove('open');
         menuToggle.classList.remove('open');
       }
@@ -1723,6 +1723,19 @@
       
       // Scroll to top
       window.scrollTo(0, 0);
+      
+      // Initialize section-specific functionality
+      if (sectionId === 'home') {
+        // Reset and initialize the server configurator
+        initServerConfigurator();
+        initFaqAccordion();
+      } else if (sectionId === 'login' || sectionId === 'register') {
+        // Reinitialize forms
+        initForms();
+      }
+      
+      // Update the URL hash
+      window.location.hash = sectionId;
     }
 
     function updateActiveNavLinks(sectionId) {
@@ -1827,6 +1840,15 @@
       
       // Update price calculation
       function updatePrice() {
+        // Re-get elements in case section was just shown
+        const ramSlider = document.getElementById('ram');
+        const ramValue = document.getElementById('ram-value');
+        const cpuSlider = document.getElementById('cpu');
+        const cpuValue = document.getElementById('cpu-value');
+        const storageSlider = document.getElementById('storage');
+        const storageValue = document.getElementById('storage-value');
+        const totalPrice = document.getElementById('total-price');
+        
         if (!ramSlider || !cpuSlider || !storageSlider || !totalPrice) return;
         
         const ram = parseInt(ramSlider.value);
@@ -1856,20 +1878,27 @@
         totalPrice.textContent = `$${total.toFixed(2)}`;
       }
       
-      // Initialize sliders and attach event listeners
-      if (ramSlider) {
-        ramSlider.addEventListener('input', updatePrice);
+      // Add event listeners to sliders
+      function setupSliderListeners() {
+        const ramSlider = document.getElementById('ram');
+        const cpuSlider = document.getElementById('cpu');
+        const storageSlider = document.getElementById('storage');
+        
+        if (ramSlider) {
+          ramSlider.addEventListener('input', updatePrice);
+        }
+        
+        if (cpuSlider) {
+          cpuSlider.addEventListener('input', updatePrice);
+        }
+        
+        if (storageSlider) {
+          storageSlider.addEventListener('input', updatePrice);
+        }
       }
       
-      if (cpuSlider) {
-        cpuSlider.addEventListener('input', updatePrice);
-      }
-      
-      if (storageSlider) {
-        storageSlider.addEventListener('input', updatePrice);
-      }
-      
-      // Initialize with default values
+      // Call setup and initialize with default values
+      setupSliderListeners();
       updatePrice();
     }
 
@@ -1877,11 +1906,15 @@
      * Form Functionality
      */
     function initForms() {
+      // Remove any existing event listeners by cloning and replacing the forms
       const loginForm = document.getElementById('loginForm');
       const registerForm = document.getElementById('registerForm');
       
       if (loginForm) {
-        loginForm.addEventListener('submit', function(e) {
+        const newLoginForm = loginForm.cloneNode(true);
+        loginForm.parentNode.replaceChild(newLoginForm, loginForm);
+        
+        newLoginForm.addEventListener('submit', function(e) {
           e.preventDefault();
           
           if (validateLoginForm(this)) {
@@ -1903,7 +1936,10 @@
       }
       
       if (registerForm) {
-        registerForm.addEventListener('submit', function(e) {
+        const newRegisterForm = registerForm.cloneNode(true);
+        registerForm.parentNode.replaceChild(newRegisterForm, registerForm);
+        
+        newRegisterForm.addEventListener('submit', function(e) {
           e.preventDefault();
           
           if (validateRegisterForm(this)) {
@@ -1920,6 +1956,25 @@
               registerButton.innerHTML = '<i class="fas fa-user-plus"></i> Register';
               registerButton.disabled = false;
             }, 1500);
+          }
+        });
+      }
+      
+      // Clear form fields
+      if (loginForm) {
+        const emailInput = document.getElementById('login-email');
+        const passwordInput = document.getElementById('login-password');
+        if (emailInput) emailInput.value = '';
+        if (passwordInput) passwordInput.value = '';
+      }
+      
+      if (registerForm) {
+        const inputs = registerForm.querySelectorAll('input');
+        inputs.forEach(input => {
+          if (input.type !== 'checkbox') {
+            input.value = '';
+          } else {
+            input.checked = false;
           }
         });
       }
